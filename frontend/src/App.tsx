@@ -12,6 +12,8 @@ import AppointmentsPage from "./pages/AppointmentsPage";
 import QueueDisplayPage from "./pages/QueueDisplayPage";
 import QueuePage from "./pages/QueuePage";
 import SchedulesPage from "./pages/SchedulesPage";
+import ConsultationPage from "./pages/ConsultationPage";
+import PrintPrescriptionPage from "./pages/PrintPrescriptionPage";
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -28,6 +30,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="queue/display" element={<QueueDisplayPage />} />
+      <Route path="print/prescription/:id" element={<PrintPrescriptionPage />} />
       <Route element={<AppLayout />}>
         <Route index element={<DashboardPage />} />
         <Route path="patients" element={<PatientsPage />} />
@@ -50,6 +53,7 @@ export default function App() {
         />
         <Route path="appointments" element={<AppointmentsPage />} />
         <Route path="queue" element={<QueuePage />} />
+        <Route path="opd/:id" element={<ConsultationPage />} />
         <Route
           path="schedules"
           element={

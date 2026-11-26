@@ -16,8 +16,9 @@ Version 1 covers the outpatient flow: patient registration, appointments, OPD co
 | Doctor weekly schedules and leave | Done |
 | Appointments: slot booking, walk-ins, check-in with tokens, reschedule, cancel, no-show | Done |
 | OPD queue per doctor and waiting-room "now serving" display | Done |
-| OPD consultation | Next |
-| OPD billing | Planned |
+| OPD consultation: vitals, notes, diagnosis (ICD-10), prescription, test orders, follow-up, referral, printed prescription | Done |
+| Medicine list and service tariff masters | Done (API + Django admin) |
+| OPD billing | Next |
 
 ## Project layout
 
@@ -25,9 +26,10 @@ Version 1 covers the outpatient flow: patient registration, appointments, OPD co
 backend/            Django project
   config/           settings, URLs
   apps/core/        users, roles, audit log, number sequences
-  apps/masters/     departments, doctors
+  apps/masters/     departments, doctors, medicines, service tariff
   apps/patients/    patient registration
   apps/appointments/ doctor schedules, leave, appointments, token queue
+  apps/opd/         vitals, consultations, prescriptions, test orders, amendments
 frontend/           React + TypeScript + Ant Design (Vite)
 docker-compose.yml  MySQL + API + web app for a server
 ```
@@ -85,6 +87,11 @@ cd frontend && npm run build
 | `/api/appointments/` with actions `check_in`, `cancel`, `no_show`, `reschedule` | Reception writes; all staff read (a doctor sees only their own) |
 | `/api/appointments/{id}/start/`, `/complete/` | The patient's doctor |
 | `/api/appointments/queue/?doctor=` | All staff |
+| `/api/appointments/{id}/vitals/` | Nurse or the patient's doctor writes; all staff read |
+| `/api/appointments/{id}/consultation/` (and `/amend/`) | The patient's doctor writes; doctors who treated or were referred the patient, and admins, read |
+| `/api/patients/{id}/clinical-history/` | Same as consultation reads |
+| `/api/opd/follow-ups/?date=` | Reception, admin |
+| `/api/medicines/`, `/api/services/` | Admin writes; all staff read |
 | `/api/users/`, `/api/audit-logs/` | Admin only |
 
 Patients and users are never deleted through the API; they are marked inactive instead.

@@ -2,7 +2,7 @@ import { CalendarOutlined, EditOutlined } from "@ant-design/icons";
 import { Button, Card, Descriptions, Result, Space, Spin, Table, Tag, Typography } from "antd";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, Page } from "../api/client";
 import type { Appointment, Patient } from "../api/types";
 import BookAppointmentModal from "../components/BookAppointmentModal";
@@ -106,6 +106,11 @@ export default function PatientDetailPage() {
             { title: "Department", dataIndex: "department_name" },
             { title: "Visit", render: (_, a) => (a.visit_type === "follow_up" ? "Follow-up" : "New") },
             { title: "Status", render: (_, a) => <StatusTag status={a.status} label={a.status_label} /> },
+            {
+              title: "",
+              render: (_, a) =>
+                a.has_consultation && hasRole("doctor") ? <Link to={`/opd/${a.id}`}>Notes</Link> : null,
+            },
           ]}
         />
         <Typography.Paragraph type="secondary" style={{ marginTop: 12, marginBottom: 0 }}>

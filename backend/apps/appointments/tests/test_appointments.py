@@ -153,6 +153,9 @@ def test_full_visit_flow_and_queue(client_for, doctor, patient):
     assert [r["id"] for r in queue["waiting"]] == [appt.id]
     assert doc_client.post(f"/api/appointments/{appt.id}/start/").data["status"] == "with_doctor"
     assert doc_client.get("/api/appointments/queue/").data["current"][0]["id"] == appt.id
+    no_notes = doc_client.post(f"/api/appointments/{appt.id}/complete/")
+    assert no_notes.status_code == 400 and "consultation" in str(no_notes.data)
+    doc_client.put(f"/api/appointments/{appt.id}/consultation/", {"complaints": "Fever"})
     assert doc_client.post(f"/api/appointments/{appt.id}/complete/").data["status"] == "completed"
 
     again = reception.post(f"/api/appointments/{appt.id}/cancel/", {"cancel_reason": "x"})

@@ -164,6 +164,8 @@ def transition(appt, action, *, user=None, cancel_reason=""):
     elif action == "start":
         appt.started_at = now
     elif action == "complete":
+        if not hasattr(appt, "consultation"):
+            raise ValidationError({"detail": "Save the consultation notes before completing the visit."})
         appt.completed_at = now
         appt.started_at = appt.started_at or now
     elif action == "cancel":

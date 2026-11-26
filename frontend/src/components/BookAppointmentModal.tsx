@@ -14,6 +14,7 @@ interface Props {
   walkIn?: boolean;
   patient?: PatientSummary;
   doctor?: number;
+  date?: string;
 }
 
 interface Values {
@@ -24,7 +25,7 @@ interface Values {
   reason?: string;
 }
 
-export default function BookAppointmentModal({ open, onClose, onBooked, walkIn = false, patient, doctor }: Props) {
+export default function BookAppointmentModal({ open, onClose, onBooked, walkIn = false, patient, doctor, date: initialDate }: Props) {
   const [form] = Form.useForm<Values>();
   const { message } = App.useApp();
   const { options } = useDoctors();
@@ -37,9 +38,10 @@ export default function BookAppointmentModal({ open, onClose, onBooked, walkIn =
     if (open) {
       setMode(walkIn ? "walk_in" : "booking");
       form.resetFields();
-      form.setFieldsValue({ patient: patient?.id, doctor, date: dayjs() });
+      const start = initialDate && dayjs(initialDate).isAfter(dayjs().subtract(1, "day")) ? dayjs(initialDate) : dayjs();
+      form.setFieldsValue({ patient: patient?.id, doctor, date: start });
     }
-  }, [open, walkIn, patient, doctor, form]);
+  }, [open, walkIn, patient, doctor, initialDate, form]);
 
   const submit = async (values: Values) => {
     setSaving(true);

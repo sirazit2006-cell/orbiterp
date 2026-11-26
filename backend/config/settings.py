@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "apps.patients",
     "apps.appointments",
     "apps.opd",
+    "apps.billing",
 ]
 
 MIDDLEWARE = [
@@ -157,6 +158,10 @@ HOSPITAL_NAME = env("HOSPITAL_NAME", "OrbitERP Hospital")
 HOSPITAL_ADDRESS = env("HOSPITAL_ADDRESS", "")
 HOSPITAL_PHONE = env("HOSPITAL_PHONE", "")
 HOSPITAL_GSTIN = env("HOSPITAL_GSTIN", "")
+
+# Above these, a cashier needs an admin to give the discount or make the refund.
+CASHIER_DISCOUNT_LIMIT_PERCENT = int(env("CASHIER_DISCOUNT_LIMIT_PERCENT", "10"))
+CASHIER_REFUND_LIMIT = int(env("CASHIER_REFUND_LIMIT", "500"))
 
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

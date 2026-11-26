@@ -30,7 +30,7 @@ export default function DashboardPage() {
         </Col>
       </Row>
       <Typography.Paragraph type="secondary" style={{ marginTop: 24 }}>
-        Today's visits, queue and collections appear here once appointments, OPD and billing are added.
+        Today's visits, queue and collections will be summarised here in the pilot release.
       </Typography.Paragraph>
     </>
   );

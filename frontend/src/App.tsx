@@ -14,6 +14,10 @@ import QueuePage from "./pages/QueuePage";
 import SchedulesPage from "./pages/SchedulesPage";
 import ConsultationPage from "./pages/ConsultationPage";
 import PrintPrescriptionPage from "./pages/PrintPrescriptionPage";
+import BillingPage from "./pages/BillingPage";
+import BillPage from "./pages/BillPage";
+import PrintBillPage from "./pages/PrintBillPage";
+import CollectionReportPage from "./pages/CollectionReportPage";
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -31,6 +35,7 @@ export default function App() {
     <Routes>
       <Route path="queue/display" element={<QueueDisplayPage />} />
       <Route path="print/prescription/:id" element={<PrintPrescriptionPage />} />
+      <Route path="print/bill/:id" element={<PrintBillPage />} />
       <Route element={<AppLayout />}>
         <Route index element={<DashboardPage />} />
         <Route path="patients" element={<PatientsPage />} />
@@ -59,6 +64,30 @@ export default function App() {
           element={
             <RequireRole roles={["admin"]}>
               <SchedulesPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="billing"
+          element={
+            <RequireRole roles={["cashier", "reception"]}>
+              <BillingPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="billing/report"
+          element={
+            <RequireRole roles={["cashier"]}>
+              <CollectionReportPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="billing/:id"
+          element={
+            <RequireRole roles={["cashier", "reception"]}>
+              <BillPage />
             </RequireRole>
           }
         />

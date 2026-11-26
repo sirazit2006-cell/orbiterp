@@ -2,9 +2,9 @@ import { CalendarOutlined, UserAddOutlined } from "@ant-design/icons";
 import { Alert, App, Button, DatePicker, Dropdown, Input, Modal, Select, Space, Table, Tag, Typography } from "antd";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api, fieldErrors, Page } from "../api/client";
-import type { Appointment, AppointmentStatus, FollowUpDue, PatientSummary } from "../api/types";
+import type { Appointment, AppointmentStatus, Bill, FollowUpDue, PatientSummary } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
 import BookAppointmentModal from "../components/BookAppointmentModal";
 import RescheduleModal from "../components/RescheduleModal";
@@ -37,6 +37,8 @@ export default function AppointmentsPage() {
   const [booking, setBooking] = useState<null | "booking" | "walk_in">(null);
   const [moving, setMoving] = useState<Appointment | null>(null);
   const canBook = hasRole("reception");
+  const canBill = hasRole("cashier", "reception");
+  const navigate = useNavigate();
 
   const setParam = (key: string, value?: string) => {
     const next = new URLSearchParams(params);
@@ -69,11 +71,20 @@ export default function AppointmentsPage() {
     try {
       const { data } = await api.post<Appointment>(`/appointments/${appt.id}/${action}/`, body);
       message.success(
-        action === "check_in" ? `${data.patient_name} checked in, token ${data.token_no}` : `${data.patient_name}: ${data.status_label}`,
+        action === "check_in" ? `${data.patient_name} checked in, token ${data.token_no}. The visit bill is ready at billing.` : `${data.patient_name}: ${data.status_label}`,
       );
       load();
     } catch (err) {
       message.error(Object.values(fieldErrors(err))[0] ?? "That did not work.");
+    }
+  };
+
+  const openBill = async (appt: Appointment) => {
+    try {
+      const { data } = await api.post<Bill>(`/bills/for-appointment/${appt.id}/`);
+      navigate(`/billing/${data.id}`);
+    } catch (err) {
+      message.error(Object.values(fieldErrors(err))[0] ?? "Could not open the bill.");
     }
   };
 
@@ -252,14 +263,19 @@ export default function AppointmentsPage() {
             title: "",
             width: 210,
             render: (_, a) =>
-              canBook && (
+              (canBook || canBill) && (
                 <Space>
-                  {a.status === "booked" && dayjs(a.date).isSame(dayjs(), "day") && (
+                  {canBill && ["checked_in", "with_doctor", "completed"].includes(a.status) && (
+                    <Button size="small" onClick={() => openBill(a)}>
+                      Bill
+                    </Button>
+                  )}
+                  {canBook && a.status === "booked" && dayjs(a.date).isSame(dayjs(), "day") && (
                     <Button size="small" type="primary" onClick={() => act(a, "check_in")}>
                       Check in
                     </Button>
                   )}
-                  {(a.status === "booked" || a.status === "checked_in") && (
+                  {canBook && (a.status === "booked" || a.status === "checked_in") && (
                     <Dropdown
                       menu={{
                         items: [

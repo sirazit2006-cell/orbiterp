@@ -229,4 +229,124 @@ export interface Hospital {
   address: string;
   phone: string;
   gstin: string;
+  cashier_discount_limit_percent: number;
+  cashier_refund_limit: number;
+}
+
+export type BillStatus = "draft" | "partly_paid" | "paid" | "cancelled" | "refunded";
+export type PayMode = "cash" | "card" | "upi";
+
+export interface BillSummary {
+  id: number;
+  bill_no: string | null;
+  date: string;
+  patient: number;
+  patient_name: string;
+  patient_uhid: string;
+  appointment: number | null;
+  doctor_name: string | null;
+  status: BillStatus;
+  status_label: string;
+  net_total: string;
+  paid_total: string;
+  refunded_total: string;
+  balance: string;
+  created_at: string;
+}
+
+export interface BillItem {
+  id: number;
+  service: number | null;
+  category: Service["category"];
+  description: string;
+  qty: number;
+  rate: string;
+  discount: string;
+  tax_code: string;
+  tax_amount: string;
+  amount: string;
+  order: number | null;
+}
+
+export interface PaymentRow {
+  id: number;
+  receipt_no: string;
+  mode: PayMode;
+  mode_label: string;
+  amount: string;
+  reference: string;
+  received_by_name: string;
+  received_at: string;
+}
+
+export interface RefundRow {
+  id: number;
+  refund_no: string;
+  mode: PayMode;
+  mode_label: string;
+  amount: string;
+  reason: string;
+  refunded_by_name: string;
+  refunded_at: string;
+}
+
+export interface Bill extends BillSummary {
+  patient_mobile: string;
+  patient_age: number | null;
+  patient_gender: "M" | "F" | "O";
+  subtotal: string;
+  discount_total: string;
+  tax_total: string;
+  discount_reason: string;
+  discount_approved_by_name: string | null;
+  cancel_reason: string;
+  is_editable: boolean;
+  items: BillItem[];
+  payments: PaymentRow[];
+  refunds: RefundRow[];
+  pending_orders: { id: number; service: number; service_name: string; price: string }[];
+  visit_bills: { id: number; bill_no: string | null; status: BillStatus; net_total: string }[];
+}
+
+export interface VisitPendingOrders {
+  appointment: number;
+  patient: number;
+  patient_name: string;
+  patient_uhid: string;
+  doctor_name: string;
+  token_no: number | null;
+  orders: { id: number; service_name: string; price: number | string }[];
+  total: number | string;
+}
+
+type ModeTotals = Record<PayMode, { received: number | string; refunded: number | string }>;
+
+export interface Shift {
+  id: number;
+  cashier: number;
+  cashier_name: string;
+  opened_at: string;
+  opening_cash: string;
+  closed_at: string | null;
+  expected_cash: string | null;
+  counted_cash: string | null;
+  difference: string | null;
+  note: string;
+  status: "open" | "closed";
+  totals: { by_mode: ModeTotals; expected_cash: number | string };
+}
+
+export interface CollectionReport {
+  from: string;
+  to: string;
+  modes: Record<PayMode, { label: string; received: number | string; refunded: number | string; net: number | string }>;
+  total_received: number | string;
+  total_refunded: number | string;
+  net: number | string;
+  cashiers: { name: string; received: number | string; refunded: number | string; receipts: number }[];
+  billed_by_category: { category: string; total: number | string }[];
+  bills: { count: number; unpaid: number };
+  discounts: { bill: number; bill_no: string | null; patient: string; amount: string; reason: string; by: string }[];
+  refunds: RefundRow[];
+  cancelled: { bill: number; bill_no: string | null; patient: string; reason: string }[];
 }

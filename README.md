@@ -18,7 +18,9 @@ Version 1 covers the outpatient flow: patient registration, appointments, OPD co
 | OPD queue per doctor and waiting-room "now serving" display | Done |
 | OPD consultation: vitals, notes, diagnosis (ICD-10), prescription, test orders, follow-up, referral, printed prescription | Done |
 | Medicine list and service tariff masters | Done (API + Django admin) |
-| OPD billing | Next |
+| OPD billing: visit bill opens at check-in, ordered tests, discounts with limits, cash/card/UPI and split payments, refunds, cancellation, printed A5 bill | Done |
+| Cashier shifts with opening float and counted-cash close, day-end collection report | Done |
+| Dashboard, doctor-wise OPD report, data import, pilot | Next |
 
 ## Project layout
 
@@ -30,6 +32,7 @@ backend/            Django project
   apps/patients/    patient registration
   apps/appointments/ doctor schedules, leave, appointments, token queue
   apps/opd/         vitals, consultations, prescriptions, test orders, amendments
+  apps/billing/     bills, payments, refunds, cashier shifts, collection report
 frontend/           React + TypeScript + Ant Design (Vite)
 docker-compose.yml  MySQL + API + web app for a server
 ```
@@ -92,6 +95,19 @@ cd frontend && npm run build
 | `/api/patients/{id}/clinical-history/` | Same as consultation reads |
 | `/api/opd/follow-ups/?date=` | Reception, admin |
 | `/api/medicines/`, `/api/services/` | Admin writes; all staff read |
+| `/api/bills/` with actions `add_item`, `remove_item/{item}`, `discount`, `pay`, `refund`, `cancel` | Cashier, reception |
+| `/api/bills/for-appointment/{id}/`, `/api/bills/pending-orders/?date=`, `/api/bills/bill-orders/{id}/` | Cashier, reception |
+| `/api/shifts/` (`?from=&to=`), `/api/shifts/current/`, `/open/`, `/{id}/close/` | Cashier, reception (each sees their own; admin sees all) |
+| `/api/reports/collection/?from=&to=` | Cashier (own collections), admin (everyone) |
 | `/api/users/`, `/api/audit-logs/` | Admin only |
 
 Patients and users are never deleted through the API; they are marked inactive instead.
+
+## Billing rules
+
+- A visit's bill opens by itself when the patient is checked in, with the doctor's first-visit or follow-up fee.
+- Bill numbers (`OPB/26-27/000001`), receipt numbers (`RCP/…`) and refund numbers (`RFD/…`) run without gaps per financial year. A bill gets its number at the first payment, so unpaid drafts never use one up.
+- Items can be changed only until the first payment. Tests the doctor orders after the consultation fee is paid go on a second bill for the same visit; the billing screen lists them under "Tests ordered by doctors, not billed yet".
+- Every discount needs a reason. Above `CASHIER_DISCOUNT_LIMIT_PERCENT` (default 10%) only an admin can give it. Refunds above `CASHIER_REFUND_LIMIT` (default ₹500) need an admin, and a cash refund cannot exceed the cash in the cashier's drawer.
+- Money can be taken or returned only with an open shift. Closing a shift asks for the counted cash, and a note is required when it does not match.
+- A bill that had payments can be cancelled only by an admin, after the money is refunded.

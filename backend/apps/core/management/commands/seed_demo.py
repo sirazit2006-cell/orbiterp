@@ -9,6 +9,9 @@ from decimal import Decimal
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
+from datetime import time
+
+from apps.appointments.models import DoctorSchedule
 from apps.core.models import Role, User
 from apps.masters.models import Department, Doctor
 
@@ -37,7 +40,7 @@ DOCTORS = [
 
 
 class Command(BaseCommand):
-    help = "Create demo departments, staff accounts and doctors."
+    help = "Create demo departments, staff accounts, doctors and their OPD schedules."
 
     def add_arguments(self, parser):
         parser.add_argument("--password", default="ChangeMe@2026")
@@ -62,6 +65,12 @@ class Command(BaseCommand):
                     "follow_up_fee": Decimal(follow_fee),
                 },
             )
+            doctor = user.doctor_profile
+            if not doctor.schedules.exists():
+                # Monday to Saturday, morning OPD 10:00-13:00 in 15-minute slots, evening OPD 17:00-19:00.
+                for weekday in range(6):
+                    DoctorSchedule.objects.create(doctor=doctor, weekday=weekday, start_time=time(10), end_time=time(13))
+                    DoctorSchedule.objects.create(doctor=doctor, weekday=weekday, start_time=time(17), end_time=time(19))
         self.stdout.write(self.style.SUCCESS(f"Demo data ready. Log in as admin / {password}"))
 
     def _user(self, username, first, last, roles, password, superuser=False):

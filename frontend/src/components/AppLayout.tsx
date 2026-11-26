@@ -1,5 +1,7 @@
 import {
   CalendarOutlined,
+  OrderedListOutlined,
+  ScheduleOutlined,
   DashboardOutlined,
   DollarOutlined,
   LogoutOutlined,
@@ -14,15 +16,17 @@ import { useAuth } from "../auth/AuthContext";
 const { Sider, Header, Content } = Layout;
 
 export default function AppLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, hasRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Appointments, OPD and billing arrive in the next steps; shown disabled so staff see what is coming.
+  // OPD consultation and billing arrive in the next steps; shown disabled so staff see what is coming.
   const items: ItemType[] = [
     { key: "/", icon: <DashboardOutlined />, label: "Dashboard" },
     { key: "/patients", icon: <TeamOutlined />, label: "Patients" },
-    { key: "/appointments", icon: <CalendarOutlined />, label: "Appointments", disabled: true },
+    { key: "/appointments", icon: <CalendarOutlined />, label: "Appointments" },
+    { key: "/queue", icon: <OrderedListOutlined />, label: "OPD queue" },
+    ...(hasRole("admin") ? [{ key: "/schedules", icon: <ScheduleOutlined />, label: "Doctor schedules" }] : []),
     { key: "/opd", icon: <MedicineBoxOutlined />, label: "OPD", disabled: true },
     { key: "/billing", icon: <DollarOutlined />, label: "Billing", disabled: true },
   ];

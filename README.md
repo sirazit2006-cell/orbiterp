@@ -13,8 +13,10 @@ Version 1 covers the outpatient flow: patient registration, appointments, OPD co
 | Audit log of every create, update and patient-record view | Done |
 | Departments and doctors (with fees and registration numbers) | Done (API + Django admin) |
 | Patient registration with UHID, duplicate check, consent, search | Done |
-| Appointments and doctor schedules | Next |
-| OPD consultation | Planned |
+| Doctor weekly schedules and leave | Done |
+| Appointments: slot booking, walk-ins, check-in with tokens, reschedule, cancel, no-show | Done |
+| OPD queue per doctor and waiting-room "now serving" display | Done |
+| OPD consultation | Next |
 | OPD billing | Planned |
 
 ## Project layout
@@ -25,6 +27,7 @@ backend/            Django project
   apps/core/        users, roles, audit log, number sequences
   apps/masters/     departments, doctors
   apps/patients/    patient registration
+  apps/appointments/ doctor schedules, leave, appointments, token queue
 frontend/           React + TypeScript + Ant Design (Vite)
 docker-compose.yml  MySQL + API + web app for a server
 ```
@@ -77,6 +80,11 @@ cd frontend && npm run build
 | `POST /api/auth/token/`, `POST /api/auth/token/refresh/`, `GET /api/auth/me/` | Everyone |
 | `/api/patients/` (`?q=` searches mobile, name or UHID), `/api/patients/duplicates/` | Reception writes; nurse, doctor, cashier read |
 | `/api/departments/`, `/api/doctors/` | Admin writes; all staff read |
+| `/api/schedules/`, `/api/doctor-leaves/` | Admin writes; all staff read |
+| `/api/doctors/{id}/slots/?date=` | All staff |
+| `/api/appointments/` with actions `check_in`, `cancel`, `no_show`, `reschedule` | Reception writes; all staff read (a doctor sees only their own) |
+| `/api/appointments/{id}/start/`, `/complete/` | The patient's doctor |
+| `/api/appointments/queue/?doctor=` | All staff |
 | `/api/users/`, `/api/audit-logs/` | Admin only |
 
 Patients and users are never deleted through the API; they are marked inactive instead.

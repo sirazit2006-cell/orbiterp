@@ -3,8 +3,8 @@ from rest_framework import viewsets
 from apps.core.audit import AuditedViewSetMixin
 from apps.core.permissions import role_permission
 
-from .models import Department, Doctor
-from .serializers import DepartmentSerializer, DoctorSerializer
+from .models import Department, Doctor, Medicine, Service
+from .serializers import DepartmentSerializer, DoctorSerializer, MedicineSerializer, ServiceSerializer
 
 # Every signed-in role needs to read the masters; only admins change them.
 StaffReadAdminWrite = role_permission(read=("reception", "nurse", "doctor", "cashier"))
@@ -25,4 +25,25 @@ class DoctorViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
     permission_classes = [StaffReadAdminWrite]
     filterset_fields = ["department", "is_active"]
     search_fields = ["user__first_name", "user__last_name", "specialization", "registration_no"]
+    http_method_names = ["get", "post", "patch", "head", "options"]
+
+
+from .serializers import MedicineSerializer, ServiceSerializer  # noqa: E402
+
+
+class MedicineViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
+    queryset = Medicine.objects.all()
+    serializer_class = MedicineSerializer
+    permission_classes = [StaffReadAdminWrite]
+    filterset_fields = ["form", "is_active"]
+    search_fields = ["name", "generic_name", "strength"]
+    http_method_names = ["get", "post", "patch", "head", "options"]
+
+
+class ServiceViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
+    queryset = Service.objects.all()
+    serializer_class = ServiceSerializer
+    permission_classes = [StaffReadAdminWrite]
+    filterset_fields = {"category": ["exact", "in"], "is_active": ["exact"]}
+    search_fields = ["name", "code"]
     http_method_names = ["get", "post", "patch", "head", "options"]

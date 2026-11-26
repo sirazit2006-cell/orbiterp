@@ -105,7 +105,7 @@ class AppointmentViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixin
     ordering_fields = ["date", "slot_time", "token_no", "created_at"]
 
     def get_queryset(self):
-        qs = Appointment.objects.select_related("patient", "doctor__user", "doctor__department")
+        qs = Appointment.objects.select_related("patient", "doctor__user", "doctor__department", "vitals", "consultation")
         user = self.request.user
         # A doctor with no other role sees only their own appointments.
         if not user.has_role("admin", "reception", "nurse", "cashier"):

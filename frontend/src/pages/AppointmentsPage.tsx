@@ -4,7 +4,7 @@ import dayjs from "dayjs";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api, fieldErrors, Page } from "../api/client";
-import type { Appointment, AppointmentStatus } from "../api/types";
+import type { Appointment, AppointmentStatus, FollowUpDue, PatientSummary } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
 import BookAppointmentModal from "../components/BookAppointmentModal";
 import RescheduleModal from "../components/RescheduleModal";
@@ -31,6 +31,8 @@ export default function AppointmentsPage() {
   const onlyFlagged = params.get("needs") === "1";
   const [rows, setRows] = useState<Appointment[]>([]);
   const [flagged, setFlagged] = useState(0);
+  const [followUps, setFollowUps] = useState<FollowUpDue[]>([]);
+  const [bookFor, setBookFor] = useState<FollowUpDue | null>(null);
   const [loading, setLoading] = useState(false);
   const [booking, setBooking] = useState<null | "booking" | "walk_in">(null);
   const [moving, setMoving] = useState<Appointment | null>(null);
@@ -58,7 +60,8 @@ export default function AppointmentsPage() {
         params: { needs_reschedule: true, status: "booked", date__gte: dayjs().format("YYYY-MM-DD"), page_size: 1 },
       })
       .then((r) => setFlagged(r.data.count));
-  }, [date, doctor, status, onlyFlagged]);
+    if (canBook) api.get<FollowUpDue[]>("/opd/follow-ups/", { params: { date } }).then((r) => setFollowUps(r.data));
+  }, [date, doctor, status, onlyFlagged, canBook]);
 
   useEffect(load, [load]);
 
@@ -125,6 +128,30 @@ export default function AppointmentsPage() {
             <Button size="small" onClick={() => setParams({ needs: "1" })}>
               Show them
             </Button>
+          }
+        />
+      )}
+
+      {followUps.length > 0 && canBook && !onlyFlagged && (
+        <Alert
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message={`${followUps.length} patient${followUps.length > 1 ? "s were" : " was"} asked to come back on this date and ${followUps.length > 1 ? "have" : "has"} no appointment yet`}
+          description={
+            <Space direction="vertical" size={4}>
+              {followUps.map((f) => (
+                <Space key={`${f.patient}-${f.doctor}`} wrap>
+                  <Link to={`/patients/${f.patient}`}>{f.patient_name}</Link>
+                  <span style={{ color: "#888" }}>
+                    {f.patient_uhid} · {f.patient_mobile} · {f.doctor_name} · last seen {dayjs(f.last_visit).format("DD MMM")}
+                  </span>
+                  <Button size="small" onClick={() => setBookFor(f)}>
+                    Book
+                  </Button>
+                </Space>
+              ))}
+            </Space>
           }
         />
       )}
@@ -261,6 +288,14 @@ export default function AppointmentsPage() {
         doctor={doctor}
         onClose={() => setBooking(null)}
         onBooked={(a) => setParams({ date: a.date })}
+      />
+      <BookAppointmentModal
+        open={bookFor !== null}
+        patient={bookFor ? ({ id: bookFor.patient, uhid: bookFor.patient_uhid, full_name: bookFor.patient_name, mobile: bookFor.patient_mobile, age: null } as PatientSummary) : undefined}
+        doctor={bookFor?.doctor}
+        date={bookFor?.follow_up_date}
+        onClose={() => setBookFor(null)}
+        onBooked={load}
       />
       <RescheduleModal appointment={moving} onClose={() => setMoving(null)} onDone={load} />
     </>

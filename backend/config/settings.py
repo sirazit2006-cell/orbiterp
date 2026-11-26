@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "apps.masters",
     "apps.patients",
     "apps.appointments",
+    "apps.opd",
 ]
 
 MIDDLEWARE = [
@@ -153,6 +154,9 @@ CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "http://localhost:5173")
 # Hospital identity used in IDs and printouts.
 HOSPITAL_CODE = env("HOSPITAL_CODE", "HOSP")
 HOSPITAL_NAME = env("HOSPITAL_NAME", "OrbitERP Hospital")
+HOSPITAL_ADDRESS = env("HOSPITAL_ADDRESS", "")
+HOSPITAL_PHONE = env("HOSPITAL_PHONE", "")
+HOSPITAL_GSTIN = env("HOSPITAL_GSTIN", "")
 
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

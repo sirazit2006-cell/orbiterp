@@ -1,6 +1,5 @@
 import {
   CalendarOutlined,
-  OrderedListOutlined,
   ScheduleOutlined,
   DashboardOutlined,
   DollarOutlined,
@@ -20,14 +19,13 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // OPD consultation and billing arrive in the next steps; shown disabled so staff see what is coming.
+  // Billing arrives in the next steps; shown disabled so staff see what is coming.
   const items: ItemType[] = [
     { key: "/", icon: <DashboardOutlined />, label: "Dashboard" },
     { key: "/patients", icon: <TeamOutlined />, label: "Patients" },
     { key: "/appointments", icon: <CalendarOutlined />, label: "Appointments" },
-    { key: "/queue", icon: <OrderedListOutlined />, label: "OPD queue" },
+    { key: "/queue", icon: <MedicineBoxOutlined />, label: "OPD queue" },
     ...(hasRole("admin") ? [{ key: "/schedules", icon: <ScheduleOutlined />, label: "Doctor schedules" }] : []),
-    { key: "/opd", icon: <MedicineBoxOutlined />, label: "OPD", disabled: true },
     { key: "/billing", icon: <DollarOutlined />, label: "Billing", disabled: true },
   ];
 

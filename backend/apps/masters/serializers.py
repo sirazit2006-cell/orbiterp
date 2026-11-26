@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from apps.core.models import Role, User
 
-from .models import Department, Doctor
+from .models import Department, Doctor, Medicine, Service
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -27,3 +27,19 @@ class DoctorSerializer(serializers.ModelSerializer):
         if Role.DOCTOR not in user.roles:
             raise serializers.ValidationError("This user does not have the doctor role.")
         return user
+
+
+class MedicineSerializer(serializers.ModelSerializer):
+    label = serializers.CharField(source="__str__", read_only=True)
+
+    class Meta:
+        model = Medicine
+        fields = ["id", "name", "generic_name", "form", "strength", "label", "is_active"]
+
+
+class ServiceSerializer(serializers.ModelSerializer):
+    category_label = serializers.CharField(source="get_category_display", read_only=True)
+
+    class Meta:
+        model = Service
+        fields = ["id", "code", "name", "category", "category_label", "price", "tax_code", "is_active"]

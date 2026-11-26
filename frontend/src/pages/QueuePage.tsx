@@ -2,11 +2,12 @@ import { DesktopOutlined } from "@ant-design/icons";
 import { App, Button, Card, Col, Empty, List, Row, Select, Space, Statistic, Tag, Typography } from "antd";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { api, fieldErrors } from "../api/client";
 import type { Appointment, Queue } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
 import { useDoctors } from "../components/useDoctors";
+import VitalsModal from "../components/VitalsModal";
 
 const REFRESH_MS = 15000;
 
@@ -19,6 +20,12 @@ export default function QueuePage() {
   const ownDoctor = doctors.find((d) => d.user === user?.id);
   const doctorId = params.get("doctor") ? Number(params.get("doctor")) : ownDoctor?.id;
   const [queue, setQueue] = useState<Queue | null>(null);
+  const [vitalsFor, setVitalsFor] = useState<Appointment | null>(null);
+  const navigate = useNavigate();
+  const canVitals = hasRole("nurse") || isDoctorUser();
+  function isDoctorUser() {
+    return !!user?.roles.includes("doctor");
+  }
   const isDoctor = !!ownDoctor && ownDoctor.id === doctorId;
   const canAct = isDoctor || hasRole("admin");
 
@@ -36,6 +43,10 @@ export default function QueuePage() {
   const act = async (appt: Appointment, action: "start" | "complete") => {
     try {
       await api.post(`/appointments/${appt.id}/${action}/`);
+      if (action === "start" && isDoctor) {
+        navigate(`/opd/${appt.id}`);
+        return;
+      }
       load();
     } catch (err) {
       message.error(Object.values(fieldErrors(err))[0] ?? "That did not work.");
@@ -90,8 +101,8 @@ export default function QueuePage() {
                   </Typography.Text>
                   {current.reason && <p style={{ marginTop: 8 }}>{current.reason}</p>}
                   {canAct && (
-                    <Button type="primary" block style={{ marginTop: 16 }} onClick={() => act(current, "complete")}>
-                      Complete consultation
+                    <Button type="primary" block style={{ marginTop: 16 }} onClick={() => navigate(`/opd/${current.id}`)}>
+                      Open consultation
                     </Button>
                   )}
                 </>
@@ -113,15 +124,22 @@ export default function QueuePage() {
                 locale={{ emptyText: "Nobody waiting" }}
                 renderItem={(a, i) => (
                   <List.Item
-                    actions={
-                      canAct && !current && i === 0
+                    actions={[
+                      ...(canVitals
                         ? [
-                            <Button key="call" size="small" onClick={() => act(a, "start")}>
+                            <Button key="vitals" size="small" type={a.has_vitals ? "default" : "dashed"} onClick={() => setVitalsFor(a)}>
+                              {a.has_vitals ? "Vitals ✓" : "Vitals"}
+                            </Button>,
+                          ]
+                        : []),
+                      ...(canAct && !current && i === 0
+                        ? [
+                            <Button key="call" size="small" type="primary" onClick={() => act(a, "start")}>
                               Call in
                             </Button>,
                           ]
-                        : undefined
-                    }
+                        : []),
+                    ]}
                   >
                     <List.Item.Meta
                       avatar={<Tag color="gold" style={{ fontSize: 16, padding: "4px 10px" }}>{a.token_no}</Tag>}
@@ -141,7 +159,13 @@ export default function QueuePage() {
                 locale={{ emptyText: "None yet" }}
                 renderItem={(a) => (
                   <List.Item>
-                    {a.token_no}. {a.patient_name}
+                    {canAct ? (
+                      <a onClick={() => navigate(`/opd/${a.id}`)}>
+                        {a.token_no}. {a.patient_name}
+                      </a>
+                    ) : (
+                      `${a.token_no}. ${a.patient_name}`
+                    )}
                   </List.Item>
                 )}
               />
@@ -149,6 +173,7 @@ export default function QueuePage() {
           </Col>
         </Row>
       )}
+      <VitalsModal appointment={vitalsFor} onClose={() => setVitalsFor(null)} onSaved={load} />
     </>
   );
 }

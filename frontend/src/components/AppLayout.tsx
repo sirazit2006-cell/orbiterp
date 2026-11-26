@@ -19,14 +19,13 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Billing arrives in the next steps; shown disabled so staff see what is coming.
   const items: ItemType[] = [
     { key: "/", icon: <DashboardOutlined />, label: "Dashboard" },
     { key: "/patients", icon: <TeamOutlined />, label: "Patients" },
     { key: "/appointments", icon: <CalendarOutlined />, label: "Appointments" },
     { key: "/queue", icon: <MedicineBoxOutlined />, label: "OPD queue" },
     ...(hasRole("admin") ? [{ key: "/schedules", icon: <ScheduleOutlined />, label: "Doctor schedules" }] : []),
-    { key: "/billing", icon: <DollarOutlined />, label: "Billing", disabled: true },
+    ...(hasRole("cashier", "reception") ? [{ key: "/billing", icon: <DollarOutlined />, label: "Billing" }] : []),
   ];
 
   const selected = "/" + (location.pathname.split("/")[1] ?? "");

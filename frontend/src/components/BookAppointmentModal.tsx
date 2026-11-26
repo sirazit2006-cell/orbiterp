@@ -1,6 +1,6 @@
 import { App, DatePicker, Form, Input, Modal, Segmented, Select } from "antd";
 import dayjs, { Dayjs } from "dayjs";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { api, fieldErrors } from "../api/client";
 import type { Appointment, PatientSummary } from "../api/types";
 import PatientSelect from "./PatientSelect";
@@ -27,6 +27,8 @@ interface Values {
 
 export default function BookAppointmentModal({ open, onClose, onBooked, walkIn = false, patient, doctor, date: initialDate }: Props) {
   const [form] = Form.useForm<Values>();
+  // Two of these modals can be mounted on one page; a per-instance form name keeps input ids unique.
+  const formName = `book${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const { message } = App.useApp();
   const { options } = useDoctors();
   const [mode, setMode] = useState<"booking" | "walk_in">(walkIn ? "walk_in" : "booking");
@@ -93,7 +95,7 @@ export default function BookAppointmentModal({ open, onClose, onBooked, walkIn =
         ]}
         style={{ marginBottom: 16 }}
       />
-      <Form form={form} layout="vertical" onFinish={submit} requiredMark={false}>
+      <Form form={form} name={formName} layout="vertical" onFinish={submit} requiredMark={false}>
         <Form.Item name="patient" label="Patient" rules={[{ required: true, message: "Choose a patient" }]}>
           <PatientSelect initial={patient} />
         </Form.Item>

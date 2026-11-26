@@ -188,5 +188,7 @@ def hospital(request):
             "address": settings.HOSPITAL_ADDRESS,
             "phone": settings.HOSPITAL_PHONE,
             "gstin": settings.HOSPITAL_GSTIN,
+            "cashier_discount_limit_percent": settings.CASHIER_DISCOUNT_LIMIT_PERCENT,
+            "cashier_refund_limit": settings.CASHIER_REFUND_LIMIT,
         }
     )

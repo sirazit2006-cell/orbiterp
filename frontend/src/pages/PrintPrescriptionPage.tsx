@@ -43,6 +43,7 @@ export default function PrintPrescriptionPage() {
       <style>{`
         @page { size: A4; margin: 14mm; }
         body { background: #fff; }
+        .ant-message { display: none !important; }
         .rx { max-width: 760px; margin: 0 auto; padding: 24px; font: 13px/1.5 system-ui, sans-serif; color: #111; }
         .rx h1 { font-size: 20px; margin: 0; color: #0b6e8a; }
         .rx .head { display: flex; justify-content: space-between; border-bottom: 2px solid #0b6e8a; padding-bottom: 8px; }

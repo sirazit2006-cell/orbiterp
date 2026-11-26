@@ -4,7 +4,9 @@ import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, Page } from "../api/client";
-import type { Appointment, Patient } from "../api/types";
+import type { Appointment, BillSummary, Patient } from "../api/types";
+import BillStatusTag from "../components/billing/BillStatusTag";
+import { inr, num } from "../components/billing/money";
 import BookAppointmentModal from "../components/BookAppointmentModal";
 import StatusTag from "../components/StatusTag";
 import { useAuth } from "../auth/AuthContext";
@@ -19,6 +21,8 @@ export default function PatientDetailPage() {
   const [missing, setMissing] = useState(false);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [booking, setBooking] = useState(false);
+  const [bills, setBills] = useState<BillSummary[]>([]);
+  const canBill = hasRole("cashier", "reception");
 
   const loadAppointments = () =>
     api
@@ -29,6 +33,10 @@ export default function PatientDetailPage() {
     loadAppointments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    if (canBill) api.get<Page<BillSummary>>("/bills/", { params: { patient: id, page_size: 50 } }).then((r) => setBills(r.data.results));
+  }, [id, canBill]);
 
   useEffect(() => {
     api
@@ -113,10 +121,28 @@ export default function PatientDetailPage() {
             },
           ]}
         />
-        <Typography.Paragraph type="secondary" style={{ marginTop: 12, marginBottom: 0 }}>
-          Consultation notes and bills appear here once OPD and billing are added.
-        </Typography.Paragraph>
       </Card>
+      {canBill && (
+        <Card title="Bills">
+          <Table<BillSummary>
+            rowKey="id"
+            size="small"
+            pagination={false}
+            dataSource={bills}
+            locale={{ emptyText: "No bills yet" }}
+            scroll={{ x: 600 }}
+            columns={[
+              { title: "Date", render: (_, b) => dayjs(b.date).format("DD MMM YYYY") },
+              { title: "Bill no", render: (_, b) => b.bill_no ?? "Not paid yet" },
+              { title: "Doctor", render: (_, b) => b.doctor_name ?? "–" },
+              { title: "Amount", align: "right", render: (_, b) => inr(b.net_total) },
+              { title: "Balance", align: "right", render: (_, b) => (num(b.balance) > 0 ? <b>{inr(b.balance)}</b> : inr(0)) },
+              { title: "Status", render: (_, b) => <BillStatusTag status={b.status} /> },
+              { title: "", render: (_, b) => <Link to={`/billing/${b.id}`}>Open</Link> },
+            ]}
+          />
+        </Card>
+      )}
       <BookAppointmentModal
         open={booking}
         patient={patient}

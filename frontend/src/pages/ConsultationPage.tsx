@@ -74,6 +74,15 @@ function toForm(c: Consultation | null, vitals: Vitals | null): Partial<FormValu
   };
 }
 
+/** Required only once the doctor starts filling the row: a fully blank medicine row is dropped on save. */
+const rxRequired = (index: number, message: string) => ({ getFieldValue }: { getFieldValue: (name: (string | number)[]) => unknown }) => ({
+  validator(_: unknown, value: string) {
+    const row = (getFieldValue(["prescriptions", index]) ?? {}) as Partial<PrescriptionLine>;
+    const started = [row.medicine_name, row.dose, row.frequency, row.duration, row.instructions].some((v) => v?.trim());
+    return !started || value?.trim() ? Promise.resolve() : Promise.reject(new Error(message));
+  },
+});
+
 function MedicineName({ index, form }: { index: number; form: ReturnType<typeof Form.useForm<FormValues>>[0] }) {
   const [options, setOptions] = useState<Medicine[]>([]);
   const timer = useRef<number>();
@@ -85,7 +94,7 @@ function MedicineName({ index, form }: { index: number; form: ReturnType<typeof 
     }, 250);
   };
   return (
-    <Form.Item name={[index, "medicine_name"]} rules={[{ required: true, message: "Medicine" }]} style={{ marginBottom: 8 }}>
+    <Form.Item name={[index, "medicine_name"]} rules={[rxRequired(index, "Medicine")]} style={{ marginBottom: 8 }}>
       <AutoComplete
         placeholder="Medicine"
         onSearch={search}
@@ -390,12 +399,12 @@ export default function ConsultationPage() {
                           </Form.Item>
                         </Col>
                         <Col xs={8} md={3}>
-                          <Form.Item name={[f.name, "frequency"]} rules={[{ required: true, message: "How often" }]} style={{ marginBottom: 8 }}>
+                          <Form.Item name={[f.name, "frequency"]} rules={[rxRequired(f.name, "How often")]} style={{ marginBottom: 8 }}>
                             <AutoComplete placeholder="1-0-1" options={FREQUENCIES.map((value) => ({ value }))} />
                           </Form.Item>
                         </Col>
                         <Col xs={8} md={3}>
-                          <Form.Item name={[f.name, "duration"]} rules={[{ required: true, message: "How long" }]} style={{ marginBottom: 8 }}>
+                          <Form.Item name={[f.name, "duration"]} rules={[rxRequired(f.name, "How long")]} style={{ marginBottom: 8 }}>
                             <AutoComplete placeholder="5 days" options={DURATIONS.map((value) => ({ value }))} />
                           </Form.Item>
                         </Col>

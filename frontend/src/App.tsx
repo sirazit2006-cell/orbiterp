@@ -8,6 +8,10 @@ import LoginPage from "./pages/LoginPage";
 import PatientDetailPage from "./pages/PatientDetailPage";
 import PatientFormPage from "./pages/PatientFormPage";
 import PatientsPage from "./pages/PatientsPage";
+import AppointmentsPage from "./pages/AppointmentsPage";
+import QueueDisplayPage from "./pages/QueueDisplayPage";
+import QueuePage from "./pages/QueuePage";
+import SchedulesPage from "./pages/SchedulesPage";
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -23,6 +27,7 @@ export default function App() {
 
   return (
     <Routes>
+      <Route path="queue/display" element={<QueueDisplayPage />} />
       <Route element={<AppLayout />}>
         <Route index element={<DashboardPage />} />
         <Route path="patients" element={<PatientsPage />} />
@@ -40,6 +45,16 @@ export default function App() {
           element={
             <RequireRole roles={["reception"]}>
               <PatientFormPage />
+            </RequireRole>
+          }
+        />
+        <Route path="appointments" element={<AppointmentsPage />} />
+        <Route path="queue" element={<QueuePage />} />
+        <Route
+          path="schedules"
+          element={
+            <RequireRole roles={["admin"]}>
+              <SchedulesPage />
             </RequireRole>
           }
         />

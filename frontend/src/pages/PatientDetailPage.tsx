@@ -1,10 +1,12 @@
-import { EditOutlined } from "@ant-design/icons";
-import { Button, Card, Descriptions, Result, Space, Spin, Tag, Typography } from "antd";
+import { CalendarOutlined, EditOutlined } from "@ant-design/icons";
+import { Button, Card, Descriptions, Result, Space, Spin, Table, Tag, Typography } from "antd";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { api } from "../api/client";
-import type { Patient } from "../api/types";
+import { api, Page } from "../api/client";
+import type { Appointment, Patient } from "../api/types";
+import BookAppointmentModal from "../components/BookAppointmentModal";
+import StatusTag from "../components/StatusTag";
 import { useAuth } from "../auth/AuthContext";
 
 const GENDER = { M: "Male", F: "Female", O: "Other" } as const;
@@ -15,6 +17,18 @@ export default function PatientDetailPage() {
   const { hasRole } = useAuth();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [missing, setMissing] = useState(false);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [booking, setBooking] = useState(false);
+
+  const loadAppointments = () =>
+    api
+      .get<Page<Appointment>>("/appointments/", { params: { patient: id, ordering: "-date,-slot_time", page_size: 50 } })
+      .then((r) => setAppointments(r.data.results));
+
+  useEffect(() => {
+    loadAppointments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   useEffect(() => {
     api
@@ -37,9 +51,14 @@ export default function PatientDetailPage() {
           {!patient.is_active && <Tag color="red">Inactive</Tag>}
         </Space>
         {hasRole("reception") && (
-          <Button icon={<EditOutlined />} onClick={() => navigate(`/patients/${patient.id}/edit`)}>
-            Edit
-          </Button>
+          <Space>
+            <Button icon={<EditOutlined />} onClick={() => navigate(`/patients/${patient.id}/edit`)}>
+              Edit
+            </Button>
+            <Button type="primary" icon={<CalendarOutlined />} onClick={() => setBooking(true)}>
+              Book appointment
+            </Button>
+          </Space>
         )}
       </Space>
       <Card title="Details">
@@ -70,9 +89,35 @@ export default function PatientDetailPage() {
           </Descriptions.Item>
         </Descriptions>
       </Card>
-      <Card title="Visits and bills">
-        <Typography.Text type="secondary">Visit history and bills appear here once OPD and billing are added.</Typography.Text>
+      <Card title="Appointments">
+        <Table<Appointment>
+          rowKey="id"
+          size="small"
+          pagination={false}
+          dataSource={appointments}
+          locale={{ emptyText: "No appointments yet" }}
+          scroll={{ x: 600 }}
+          columns={[
+            {
+              title: "Date",
+              render: (_, a) => `${dayjs(a.date).format("DD MMM YYYY")} ${a.slot_time ? a.slot_time.slice(0, 5) : "(walk-in)"}`,
+            },
+            { title: "Doctor", dataIndex: "doctor_name" },
+            { title: "Department", dataIndex: "department_name" },
+            { title: "Visit", render: (_, a) => (a.visit_type === "follow_up" ? "Follow-up" : "New") },
+            { title: "Status", render: (_, a) => <StatusTag status={a.status} label={a.status_label} /> },
+          ]}
+        />
+        <Typography.Paragraph type="secondary" style={{ marginTop: 12, marginBottom: 0 }}>
+          Consultation notes and bills appear here once OPD and billing are added.
+        </Typography.Paragraph>
       </Card>
+      <BookAppointmentModal
+        open={booking}
+        patient={patient}
+        onClose={() => setBooking(false)}
+        onBooked={loadAppointments}
+      />
     </Space>
   );
 }

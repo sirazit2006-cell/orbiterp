@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.masters",
     "apps.patients",
+    "apps.appointments",
 ]
 
 MIDDLEWARE = [
@@ -135,8 +136,9 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "DEFAULT_PAGINATION_CLASS": "apps.core.pagination.StandardPagination",
     "PAGE_SIZE": 25,
+    "TEST_REQUEST_DEFAULT_FORMAT": "json",
 }
 
 SIMPLE_JWT = {
